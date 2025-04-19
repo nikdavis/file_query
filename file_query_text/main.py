@@ -1,6 +1,8 @@
 import os
 import sys
 from file_query_text.grammar import query  # Import the fixed grammar
+import gitignore_parser
+import os.path
 
 
 def parse_query(query_str):
@@ -29,14 +31,51 @@ class QueryVisitor:
         self.from_dirs = parsed_query.get("from_dirs", [])
         self.where = parsed_query.get("where", None)
 
-def execute_query(select, from_dirs, where_conditions):
+def execute_query(select, from_dirs, where_conditions, respect_gitignore=True):
     matched_files = []
+
+    # Set up gitignore matching if requested
+    gitignore_matchers = {}
+
     for directory in from_dirs:
         if not os.path.exists(directory):
             continue
+
+        # Initialize gitignore matcher for this directory
+        if respect_gitignore:
+            # Find the repository root (where .git directory is)
+            repo_root = directory
+            while repo_root != os.path.dirname(repo_root):  # Stop at filesystem root
+                if os.path.exists(os.path.join(repo_root, '.git')):
+                    break
+                repo_root = os.path.dirname(repo_root)
+
+            # If we found a git repo, check for .gitignore
+            gitignore_path = os.path.join(repo_root, '.gitignore')
+            if os.path.exists(gitignore_path):
+                if repo_root not in gitignore_matchers:
+                    try:
+                        gitignore_matchers[repo_root] = gitignore_parser.parse_gitignore(gitignore_path)
+                    except Exception as e:
+                        print(f"Warning: Error parsing .gitignore at {gitignore_path}: {e}")
+
         for root, _, files in os.walk(directory):
             for filename in files:
                 file_path = os.path.join(root, filename)
+
+                # Check if file is ignored by gitignore rules
+                if respect_gitignore:
+                    # Find which repo this file belongs to
+                    file_repo_root = None
+                    for repo_root in gitignore_matchers:
+                        if file_path.startswith(repo_root):
+                            file_repo_root = repo_root
+                            break
+
+                    # Skip if file is ignored by gitignore
+                    if file_repo_root and gitignore_matchers[file_repo_root](file_path):
+                        continue
+
                 if evaluate_conditions(file_path, where_conditions):
                     matched_files.append(file_path)
     return matched_files
@@ -52,6 +91,8 @@ def evaluate_conditions(file_path, condition):
             return os.path.basename(file_path)
         if attr_name == "size":
             return os.path.getsize(file_path)
+        if attr_name == "path":
+            return file_path
         # Add more attributes as needed
         return None
 
@@ -69,8 +110,8 @@ def evaluate_conditions(file_path, condition):
                 op = expr[1]
                 val = expr[2].strip("'") if isinstance(expr[2], str) else expr[2]  # Remove quotes if string
 
-                if op == "==": return str(attr_val) == val
-                if op == "!=": return str(attr_val) != val
+                if op == "=" or op == "==": return str(attr_val) == val
+                if op == "!=" or op == "<>": return str(attr_val) != val
                 if op == "<": return attr_val is not None and int(attr_val) < int(val)
                 if op == "<=": return attr_val is not None and int(attr_val) <= int(val)
                 if op == ">": return attr_val is not None and int(attr_val) > int(val)
@@ -89,6 +130,26 @@ def evaluate_conditions(file_path, condition):
         return False
 
     return eval_expr(condition.asList())
+
+# Function to get all attributes for a file
+def get_file_attributes(file_path):
+    """Get all available attributes for a file."""
+    cwd = os.getcwd()
+    try:
+        # Make path relative to current directory
+        rel_path = os.path.relpath(file_path, cwd)
+    except ValueError:
+        # Handle case when on different drives (Windows)
+        rel_path = file_path
+
+    attributes = {
+        "extension": os.path.splitext(file_path)[1][1:],
+        "name": os.path.basename(file_path),
+        "size": os.path.getsize(file_path),
+        "path": file_path,
+        "relative_path": rel_path,
+    }
+    return attributes
 
 # Example usage
 if __name__ == "__main__":

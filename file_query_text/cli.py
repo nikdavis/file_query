@@ -4,7 +4,7 @@ import sys
 import argparse
 from pathlib import Path
 # Fix imports to work when installed as a package
-from file_query_text.main import parse_query, QueryVisitor, execute_query
+from file_query_text.main import parse_query, QueryVisitor, execute_query, get_file_attributes
 
 def main():
     parser = argparse.ArgumentParser(description="SQL-like queries for your filesystem")
@@ -14,6 +14,16 @@ def main():
         "--show-content", "-c",
         action="store_true",
         help="Display content of the matching files"
+    )
+    parser.add_argument(
+        "--debug", "-d",
+        action="store_true",
+        help="Debug mode: print all file attributes regardless of query"
+    )
+    parser.add_argument(
+        "--no-gitignore", "-g",
+        action="store_true",
+        help="Don't respect .gitignore files (show ignored files)"
     )
     args = parser.parse_args()
 
@@ -40,7 +50,12 @@ def main():
     if parsed:
         visitor = QueryVisitor()
         visitor.visit(parsed)
-        results = execute_query(visitor.select, visitor.from_dirs, visitor.where)
+        results = execute_query(
+            visitor.select,
+            visitor.from_dirs,
+            visitor.where,
+            respect_gitignore=not args.no_gitignore
+        )
 
         # Display results
         if not results:
@@ -48,8 +63,20 @@ def main():
             return
 
         print(f"Found {len(results)} matching files:")
+
+        # In debug mode, print headers
+        if args.debug:
+            print(f"{'EXTENSION':<15} {'NAME':<30} {'SIZE':<10} {'PATH'}")
+            print(f"{'-'*15} {'-'*30} {'-'*10} {'-'*30}")
+
         for file_path in results:
-            print(file_path)
+            if args.debug:
+                # Print all attributes in debug mode
+                attrs = get_file_attributes(file_path)
+                print(f"{attrs['extension']:<15} {attrs['name']:<30} {attrs['size']:<10} {attrs['relative_path']}")
+            else:
+                # Standard output
+                print(file_path)
 
             # Optionally display file contents
             if args.show_content:

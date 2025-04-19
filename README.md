@@ -74,6 +74,7 @@ SELECT * FROM 'directory_path' WHERE condition
 - `extension`: File extension (without the dot)
 - `name`: Filename with extension
 - `size`: File size in bytes
+- `path`: Full file path
 
 ### Operators
 
@@ -91,4 +92,7 @@ fq "NOT name == 'main.py'"
 
 # Find all large image files
 fq "SELECT * FROM '.' WHERE (extension == 'jpg' OR extension == 'png') AND size > 500000"
+
+# Find files with 'config' in their path
+fq "path == '.*config.*'"
 ```

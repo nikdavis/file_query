@@ -17,15 +17,16 @@ from pyparsing import (
     c_style_comment,
     nums,
     pyparsing_common,
+    CaselessKeyword,
 )
 
 # Define keywords
-SELECT = Suppress(Word("SELECT"))
-FROM = Suppress(Word("FROM"))
-WHERE = Suppress(Word("WHERE"))
-AND = Literal("AND")
-OR = Literal("OR")
-NOT = Literal("NOT")
+SELECT = Suppress(CaselessKeyword("SELECT"))
+FROM = Suppress(CaselessKeyword("FROM"))
+WHERE = Suppress(CaselessKeyword("WHERE"))
+AND = CaselessKeyword("AND")
+OR = CaselessKeyword("OR")
+NOT = CaselessKeyword("NOT")
 
 # Define identifiers and literals
 IDENTIFIER = Word(alphas + "_")
@@ -35,7 +36,7 @@ NUMERIC_LITERAL = pyparsing_common.integer
 DIRECTORY_LIST = Group(delimitedList(STRING_LITERAL))
 
 # Define comparison operators
-COMPARISON_OP = oneOf("== != < <= > >=")
+COMPARISON_OP = oneOf("= == != <> < <= > >=")
 ATTRIBUTE = IDENTIFIER + Suppress("=") + STRING_LITERAL
 
 # Define basic condition with support for both string and numeric literals
