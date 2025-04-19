@@ -281,3 +281,63 @@ def test_complex_nested_conditions(temp_dir):
     # Normalize paths for comparison
     actual = [str(p) for p in results]
     assert sorted(actual) == sorted(expected_files)
+
+def test_query_without_where_clause(temp_dir):
+    """Test SELECT * FROM without a WHERE clause."""
+    query_str = f"""
+    SELECT *
+    FROM '{temp_dir}/docs'
+    """
+
+    parsed = parse_query(query_str)
+    visitor = QueryVisitor()
+    visitor.visit(parsed)
+
+    results = execute_query(
+        visitor.select,
+        visitor.from_dirs,
+        visitor.where
+    )
+
+    # All files in the docs directory should be returned
+    expected_files = []
+    for path in (temp_dir / "docs").glob("*"):
+        if path.is_file():
+            expected_files.append(str(path))
+
+    # Normalize paths for comparison
+    actual = [str(p) for p in results]
+    assert sorted(actual) == sorted(expected_files)
+
+def test_empty_query(temp_dir):
+    """Test empty query which should return all files."""
+    # Create a test file structure
+    with open(temp_dir / "docs/extra_file.txt", "w") as f:
+        f.write("Extra test file")
+
+    # First, construct the query string that the CLI would create for an empty query
+    query_str = f"SELECT * FROM '{temp_dir}'"
+
+    parsed = parse_query(query_str)
+    visitor = QueryVisitor()
+    visitor.visit(parsed)
+
+    results = execute_query(
+        visitor.select,
+        visitor.from_dirs,
+        visitor.where
+    )
+
+    # Count all files in all subdirectories
+    expected_files = []
+    for path in temp_dir.glob("**/*"):
+        if path.is_file():
+            expected_files.append(str(path))
+
+    # Normalize paths for comparison
+    actual = [str(p) for p in results]
+    assert sorted(actual) == sorted(expected_files)
+
+    # Ensure we're getting more than just one file type
+    extensions = {os.path.splitext(p)[1] for p in actual}
+    assert len(extensions) > 1, "Empty query should return files with different extensions"
