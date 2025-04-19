@@ -97,6 +97,14 @@ def evaluate_conditions(file_path, condition):
     if not condition:
         return True
 
+    # Get the relative path for comparison
+    cwd = os.getcwd()
+    try:
+        relative_path = os.path.relpath(file_path, cwd)
+    except ValueError:
+        # Handle case when on different drives (Windows)
+        relative_path = file_path
+
     def get_file_attr(attr_name):
         if attr_name == "extension":
             return os.path.splitext(file_path)[1][1:]
@@ -105,7 +113,7 @@ def evaluate_conditions(file_path, condition):
         if attr_name == "size":
             return os.path.getsize(file_path)
         if attr_name == "path":
-            return file_path
+            return relative_path  # Use relative path instead of absolute
         # Add more attributes as needed
         return None
 
@@ -119,7 +127,8 @@ def evaluate_conditions(file_path, condition):
 
             # 1. Basic condition: [attr, op, value]
             if isinstance(expr[0], str) and isinstance(expr[1], str):
-                attr_val = get_file_attr(expr[0])
+                attr_name = expr[0]
+                attr_val = get_file_attr(attr_name)
                 op = expr[1]
                 val = expr[2].strip("'") if isinstance(expr[2], str) else expr[2]  # Remove quotes if string
 
@@ -130,14 +139,7 @@ def evaluate_conditions(file_path, condition):
                 if op == ">": return attr_val is not None and int(attr_val) > int(val)
                 if op == ">=": return attr_val is not None and int(attr_val) >= int(val)
                 if op.upper() == "LIKE":
-                    if attr_val is None:
-                        return False
-                    # Convert SQL LIKE pattern (with % wildcards) to regex pattern
-                    # Escape any regex special characters in the pattern except %
-                    pattern = re.escape(val).replace('\\%', '%')  # Unescape % after escaping everything else
-                    pattern = pattern.replace("%", ".*")
-                    pattern = f"^{pattern}$"  # Anchor pattern to match whole string
-                    return bool(re.search(pattern, str(attr_val), re.IGNORECASE))
+                    return check_like_condition(attr_val, val)
 
             # 2. Logical operations from infixNotation: [left, op, right]
             elif expr[1] == "AND":
@@ -151,19 +153,27 @@ def evaluate_conditions(file_path, condition):
 
         # 4. Special case for NOT LIKE: [attr, 'NOT', 'LIKE', value]
         elif len(expr) == 4 and expr[1] == "NOT" and expr[2] == "LIKE":
-            attr_val = get_file_attr(expr[0])
+            attr_name = expr[0]
+            attr_val = get_file_attr(attr_name)
             val = expr[3].strip("'") if isinstance(expr[3], str) else expr[3]
 
             if attr_val is None:
                 return True  # If attribute doesn't exist, NOT LIKE is True
 
-            # Convert SQL LIKE pattern (with % wildcards) to regex pattern
-            pattern = re.escape(val).replace('\\%', '%')  # Unescape % after escaping everything else
-            pattern = pattern.replace("%", ".*")
-            pattern = f"^{pattern}$"  # Anchor pattern to match whole string
-            return not bool(re.search(pattern, str(attr_val), re.IGNORECASE))
+            return not check_like_condition(attr_val, val)
 
         return False
+
+    # Helper function to check LIKE conditions with proper pattern matching
+    def check_like_condition(attr_val, val):
+        if attr_val is None:
+            return False
+        # Convert SQL LIKE pattern (with % wildcards) to regex pattern
+        # Escape any regex special characters in the pattern except %
+        pattern = re.escape(val).replace('\\%', '%')  # Unescape % after escaping everything else
+        pattern = pattern.replace("%", ".*")
+        pattern = f"^{pattern}$"  # Anchor pattern to match whole string
+        return bool(re.search(pattern, str(attr_val), re.IGNORECASE))
 
     return eval_expr(condition.asList())
 
@@ -182,8 +192,8 @@ def get_file_attributes(file_path):
         "extension": os.path.splitext(file_path)[1][1:],
         "name": os.path.basename(file_path),
         "size": os.path.getsize(file_path),
-        "path": file_path,
-        "relative_path": rel_path,
+        "path": rel_path,  # Use relative path for consistency
+        "absolute_path": file_path,  # Keep the absolute path as well
     }
     return attributes
 
