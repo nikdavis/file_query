@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "file_query_cli"
+name = "file_query_text"
 version = "0.1.0"
 description = "SQL-like interface for querying files in your filesystem"
 readme = "README.md"
@@ -21,8 +21,8 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/yourusername/file-query"
-"Bug Tracker" = "https://github.com/yourusername/file-query/issues"
+"Homepage" = "https://github.com/nikdavis/file_query_text"
+"Bug Tracker" = "https://github.com/nikdavis/file_query_text/issues"
 
 [project.scripts]
 fq = "file_query_text.cli:main"
