@@ -4,7 +4,7 @@ import sys
 import argparse
 from pathlib import Path
 # Fix imports to work when installed as a package
-from file_query.main import parse_query, QueryVisitor, execute_query
+from file_query_text.main import parse_query, QueryVisitor, execute_query
 
 def main():
     parser = argparse.ArgumentParser(description="SQL-like queries for your filesystem")
