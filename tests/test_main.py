@@ -238,3 +238,46 @@ def test_numeric_comparison(temp_dir):
     # Normalize paths for comparison
     actual = [str(p) for p in results]
     assert sorted(actual) == sorted(large_files)
+
+def test_complex_nested_conditions(temp_dir):
+    """Test complex nested logical conditions."""
+    # Create specific test files with various properties
+    with open(temp_dir / "docs/small_report.pdf", "w") as f:
+        f.write("Small PDF")  # Small PDF file
+    with open(temp_dir / "docs/large_report.pdf", "w") as f:
+        f.write("Large PDF file" * 20)  # Large PDF file
+    with open(temp_dir / "docs/small_note.txt", "w") as f:
+        f.write("Small TXT")  # Small TXT file
+    with open(temp_dir / "docs/large_note.txt", "w") as f:
+        f.write("Large TXT file" * 20)  # Large TXT file
+    with open(temp_dir / "docs/image.jpg", "w") as f:
+        f.write("Image file" * 5)  # JPG file
+
+    # Complex query: Find (PDF files that are large) OR (TXT files that are not small)
+    query_str = f"""
+    SELECT *
+    FROM '{temp_dir}/docs'
+    WHERE (extension == 'pdf' AND size > 100) OR (extension == 'txt' AND NOT size < 50)
+    """
+
+    parsed = parse_query(query_str)
+    visitor = QueryVisitor()
+    visitor.visit(parsed)
+
+    results = execute_query(
+        visitor.select,
+        visitor.from_dirs,
+        visitor.where
+    )
+
+    # Manually determine expected results
+    expected_files = []
+    for path in (temp_dir / "docs").glob("*"):
+        ext = path.suffix[1:]  # Remove the dot
+        size = path.stat().st_size
+        if (ext == 'pdf' and size > 100) or (ext == 'txt' and size >= 50):
+            expected_files.append(str(path))
+
+    # Normalize paths for comparison
+    actual = [str(p) for p in results]
+    assert sorted(actual) == sorted(expected_files)
