@@ -13,16 +13,20 @@ wheels = [
 [[package]]
 name = "file-query"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "pyparsing" },
+]
+
+[package.optional-dependencies]
+dev = [
     { name = "pytest" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "pyparsing", specifier = ">=3.2.3" },
-    { name = "pytest", specifier = ">=8.3.5" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.5" },
 ]
 
 [[package]]

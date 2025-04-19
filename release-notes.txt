@@ -1,0 +1,12 @@
+# Release Notes
+
+## 0.1.0 (2024-xx-xx)
+
+Initial release of file-query.
+
+Features:
+- SQL-like syntax for querying the filesystem
+- Filter files by name, extension, and size
+- Complex queries with logical operators (AND, OR, NOT)
+- Command-line interface with the 'fq' command
+- Display file contents with the --show-content option

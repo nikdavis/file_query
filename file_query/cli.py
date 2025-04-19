@@ -4,11 +4,12 @@ import sys
 import argparse
 from pathlib import Path
 # Fix imports to work when installed as a package
-from src.main import parse_query, QueryVisitor, execute_query
+from file_query.main import parse_query, QueryVisitor, execute_query
 
 def main():
     parser = argparse.ArgumentParser(description="SQL-like queries for your filesystem")
-    parser.add_argument("query", help="SQL query for finding files")
+    parser.add_argument("query", nargs="?", default="",
+                        help="SQL query for finding files (default: lists all files in current directory)")
     parser.add_argument(
         "--show-content", "-c",
         action="store_true",

@@ -2,7 +2,7 @@ import os
 import pytest
 import tempfile
 from pathlib import Path
-from src.main import parse_query, execute_query, QueryVisitor
+from file_query.main import parse_query, execute_query, QueryVisitor
 
 @pytest.fixture
 def temp_dir():
@@ -341,3 +341,36 @@ def test_empty_query(temp_dir):
     # Ensure we're getting more than just one file type
     extensions = {os.path.splitext(p)[1] for p in actual}
     assert len(extensions) > 1, "Empty query should return files with different extensions"
+
+def test_no_argument_query(temp_dir):
+    """Test when no query argument is passed (None), should be treated as empty string."""
+    # Create a test file structure
+    with open(temp_dir / "docs/extra_file2.txt", "w") as f:
+        f.write("Another test file")
+
+    # Simulate what happens when no argument is passed (CLI would convert to empty string)
+    query_str = f"SELECT * FROM '{temp_dir}'"
+
+    parsed = parse_query(query_str)
+    visitor = QueryVisitor()
+    visitor.visit(parsed)
+
+    results = execute_query(
+        visitor.select,
+        visitor.from_dirs,
+        visitor.where
+    )
+
+    # Count all files in all subdirectories
+    expected_files = []
+    for path in temp_dir.glob("**/*"):
+        if path.is_file():
+            expected_files.append(str(path))
+
+    # Normalize paths for comparison
+    actual = [str(p) for p in results]
+    assert sorted(actual) == sorted(expected_files)
+
+    # Ensure we're getting more than just one file type
+    extensions = {os.path.splitext(p)[1] for p in actual}
+    assert len(extensions) > 1, "Query with no argument should return files with different extensions"
