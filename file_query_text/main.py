@@ -193,7 +193,6 @@ def get_file_attributes(file_path):
         "name": os.path.basename(file_path),
         "size": os.path.getsize(file_path),
         "path": rel_path,  # Use relative path for consistency
-        "absolute_path": file_path,  # Keep the absolute path as well
     }
     return attributes
 

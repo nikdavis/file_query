@@ -86,7 +86,7 @@ def main():
             if args.debug:
                 # Print all attributes in debug mode
                 attrs = get_file_attributes(file_path)
-                print(f"{attrs['extension']:<15} {attrs['name']:<30} {attrs['size']:<10} {attrs['relative_path']}")
+                print(f"{attrs['extension']:<15} {attrs['name']:<30} {attrs['size']:<10} {attrs['path']}")
             else:
                 # Standard output
                 print(file_path)
