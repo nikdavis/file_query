@@ -56,12 +56,17 @@ def evaluate_conditions(file_path, condition):
 
     # Evaluation function for expressions
     def eval_expr(expr):
-        if isinstance(expr, list):
-            if len(expr) == 3:
-                # Basic condition: [attr, op, value]
+        if not isinstance(expr, list):
+            return expr  # For simple terms like 'AND', 'OR'
+
+        if len(expr) == 3:
+            # Handle three types of expressions:
+
+            # 1. Basic condition: [attr, op, value]
+            if isinstance(expr[0], str) and isinstance(expr[1], str):
                 attr_val = get_file_attr(expr[0])
                 op = expr[1]
-                val = expr[2].strip("'")  # Remove quotes
+                val = expr[2].strip("'") if isinstance(expr[2], str) else expr[2]  # Remove quotes if string
 
                 if op == "==": return str(attr_val) == val
                 if op == "!=": return str(attr_val) != val
@@ -69,12 +74,17 @@ def evaluate_conditions(file_path, condition):
                 if op == "<=": return attr_val is not None and int(attr_val) <= int(val)
                 if op == ">": return attr_val is not None and int(attr_val) > int(val)
                 if op == ">=": return attr_val is not None and int(attr_val) >= int(val)
-            elif expr[0] == "NOT":
-                return not eval_expr(expr[1])
-            elif expr[1] in ["AND", "OR"]:
-                left = eval_expr(expr[0])
-                right = eval_expr(expr[2])
-                return left and right if expr[1] == "AND" else left or right
+
+            # 2. Logical operations from infixNotation: [left, op, right]
+            elif expr[1] == "AND":
+                return eval_expr(expr[0]) and eval_expr(expr[2])
+            elif expr[1] == "OR":
+                return eval_expr(expr[0]) or eval_expr(expr[2])
+
+        # 3. NOT operation: ['NOT', expr]
+        elif len(expr) == 2 and expr[0] == "NOT":
+            return not eval_expr(expr[1])
+
         return False
 
     return eval_expr(condition.asList())

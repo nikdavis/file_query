@@ -106,3 +106,135 @@ def test_combined_conditions(temp_dir):
 
     # We don't have any png files
     assert len(results) == 0
+
+def test_and_conditions(temp_dir):
+    """Test AND condition logic."""
+    # Create a specific file for this test
+    with open(temp_dir / "docs/report_2023.pdf", "w") as f:
+        f.write("Test PDF with year")
+
+    query_str = f"""
+    SELECT *
+    FROM '{temp_dir}/docs'
+    WHERE extension == 'pdf' AND name == 'report_2023.pdf'
+    """
+
+    parsed = parse_query(query_str)
+    visitor = QueryVisitor()
+    visitor.visit(parsed)
+
+    results = execute_query(
+        visitor.select,
+        visitor.from_dirs,
+        visitor.where
+    )
+
+    # Expected result (only the matching PDF file)
+    expected = [str(temp_dir / "docs/report_2023.pdf")]
+
+    # Normalize paths for comparison
+    actual = [str(p) for p in results]
+    assert sorted(actual) == sorted(expected)
+
+def test_or_conditions(temp_dir):
+    """Test OR condition logic."""
+    # Create specific files for this test
+    with open(temp_dir / "docs/report_2023.pdf", "w") as f:
+        f.write("Test PDF with year")
+    with open(temp_dir / "docs/presentation.ppt", "w") as f:
+        f.write("Test PPT")
+
+    query_str = f"""
+    SELECT *
+    FROM '{temp_dir}/docs'
+    WHERE extension == 'pdf' OR extension == 'ppt'
+    """
+
+    parsed = parse_query(query_str)
+    visitor = QueryVisitor()
+    visitor.visit(parsed)
+
+    results = execute_query(
+        visitor.select,
+        visitor.from_dirs,
+        visitor.where
+    )
+
+    # Get all files in the directory with the specified extensions
+    all_pdf_files = list((temp_dir / "docs").glob("*.pdf"))
+    all_ppt_files = list((temp_dir / "docs").glob("*.ppt"))
+    expected_files = all_pdf_files + all_ppt_files
+    expected = [str(p) for p in expected_files]
+
+    # Normalize paths for comparison
+    actual = [str(p) for p in results]
+    assert sorted(actual) == sorted(expected)
+
+def test_not_conditions(temp_dir):
+    """Test NOT condition logic."""
+    # Create specific files for this test
+    with open(temp_dir / "docs/report.pdf", "w") as f:
+        f.write("Test PDF")
+    with open(temp_dir / "docs/presentation.ppt", "w") as f:
+        f.write("Test PPT")
+    with open(temp_dir / "docs/document.txt", "w") as f:
+        f.write("Test TXT")
+
+    query_str = f"""
+    SELECT *
+    FROM '{temp_dir}/docs'
+    WHERE NOT extension == 'pdf'
+    """
+
+    parsed = parse_query(query_str)
+    visitor = QueryVisitor()
+    visitor.visit(parsed)
+
+    results = execute_query(
+        visitor.select,
+        visitor.from_dirs,
+        visitor.where
+    )
+
+    # Query should return all non-PDF files
+    all_non_pdf_files = []
+    for path in (temp_dir / "docs").glob("*"):
+        if path.suffix != ".pdf":
+            all_non_pdf_files.append(str(path))
+
+    # Normalize paths for comparison
+    actual = [str(p) for p in results]
+    assert sorted(actual) == sorted(all_non_pdf_files)
+
+def test_numeric_comparison(temp_dir):
+    """Test numerical comparison operators."""
+    # Create files with different sizes
+    with open(temp_dir / "docs/small.txt", "w") as f:
+        f.write("Small")  # Size is 5 bytes
+    with open(temp_dir / "docs/medium.txt", "w") as f:
+        f.write("Medium text" * 5)  # Size > 10 bytes
+    with open(temp_dir / "docs/large.txt", "w") as f:
+        f.write("Large text file" * 20)  # Size > 100 bytes
+
+    # Query: Find files larger than 100 bytes
+    query_str = f"SELECT * FROM '{temp_dir}/docs' WHERE size > 100"
+
+    parsed = parse_query(query_str)
+    visitor = QueryVisitor()
+    visitor.visit(parsed)
+
+    results = execute_query(
+        visitor.select,
+        visitor.from_dirs,
+        visitor.where
+    )
+
+    # Filter files manually to compare
+    large_files = []
+    for path in (temp_dir / "docs").glob("*"):
+        if path.stat().st_size > 100:
+            large_files.append(str(path))
+
+    # Normalize paths for comparison
+    actual = [str(p) for p in results]
+    assert sorted(actual) == sorted(large_files)
