@@ -63,9 +63,17 @@ def execute_query(select, from_dirs, where_conditions, respect_gitignore=True, s
             for filename in files:
                 file_path = os.path.join(root, filename)
 
-                # Skip hidden files (dot files) unless explicitly requested
-                if not show_hidden and os.path.basename(file_path).startswith('.'):
-                    continue
+                # Skip hidden files or files in hidden directories unless explicitly requested
+                if not show_hidden:
+                    # Check if file name starts with dot
+                    if os.path.basename(file_path).startswith('.'):
+                        continue
+
+                    # Check if any parent directory starts with dot
+                    rel_path = os.path.relpath(file_path, directory)
+                    path_parts = rel_path.split(os.sep)
+                    if any(part.startswith('.') for part in path_parts[:-1]):  # Check all except the filename
+                        continue
 
                 # Check if file is ignored by gitignore rules
                 if respect_gitignore:
