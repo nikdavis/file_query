@@ -2,7 +2,7 @@ import os
 import pytest
 import tempfile
 from pathlib import Path
-from file_query.main import parse_query, execute_query, QueryVisitor
+from file_query_text.main import parse_query, execute_query, QueryVisitor
 
 @pytest.fixture
 def temp_dir():

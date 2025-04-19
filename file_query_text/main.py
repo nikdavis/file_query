@@ -1,8 +1,9 @@
 import os
 import sys
+from file_query_text.grammar import query  # Import the fixed grammar
+
 
 def parse_query(query_str):
-    from .grammar import query  # Import the fixed grammar
     try:
         # Increase recursion limit temporarily to handle complex queries
         old_limit = sys.getrecursionlimit()
