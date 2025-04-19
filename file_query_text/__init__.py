@@ -2,4 +2,4 @@
 SQL-like interface for querying files in your filesystem.
 """
 
-__version__ = "0.1.4"
+__version__ = "0.1.6"

@@ -5,6 +5,7 @@ import argparse
 from pathlib import Path
 # Fix imports to work when installed as a package
 from file_query_text.main import parse_query, QueryVisitor, execute_query, get_file_attributes
+from file_query_text import __version__
 
 def main():
     parser = argparse.ArgumentParser(description="SQL-like queries for your filesystem")
@@ -29,6 +30,12 @@ def main():
         "--show-hidden", "-s",
         action="store_true",
         help="Show hidden files (starting with a dot)"
+    )
+    parser.add_argument(
+        "--version", "-v",
+        action="version",
+        version=f"file_query_text {__version__}",
+        help="Show the version and exit"
     )
     args = parser.parse_args()
 
