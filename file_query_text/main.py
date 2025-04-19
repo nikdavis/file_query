@@ -1,7 +1,7 @@
 import os
 import sys
 from file_query_text.grammar import query  # Import the fixed grammar
-import gitignore_parser
+import file_query_text.gitignore_parser as gitignore_parser
 import os.path
 
 
