@@ -12,9 +12,10 @@ wheels = [
 
 [[package]]
 name = "file-query-text"
-version = "0.1.1"
+version = "0.1.4"
 source = { editable = "." }
 dependencies = [
+    { name = "gitignore-parser" },
     { name = "pyparsing" },
 ]
 
@@ -23,11 +24,26 @@ dev = [
     { name = "pytest" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
 [package.metadata]
 requires-dist = [
+    { name = "gitignore-parser", specifier = ">=0.1.12" },
     { name = "pyparsing", specifier = ">=3.2.3" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.5" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest", specifier = ">=8.3.5" }]
+
+[[package]]
+name = "gitignore-parser"
+version = "0.1.12"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/86/a8/faf07759672973362e3f1f9742281a90aec7846e8a4043c4df5652990054/gitignore_parser-0.1.12.tar.gz", hash = "sha256:78b22243adc0f02102c56c5e8c9a1d9121394142ca6143a90daa7f8d7a07a17e", size = 5407 }
 
 [[package]]
 name = "iniconfig"

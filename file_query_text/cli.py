@@ -25,6 +25,11 @@ def main():
         action="store_true",
         help="Don't respect .gitignore files (show ignored files)"
     )
+    parser.add_argument(
+        "--show-hidden", "-s",
+        action="store_true",
+        help="Show hidden files (starting with a dot)"
+    )
     args = parser.parse_args()
 
     # Get current working directory for the query
@@ -54,7 +59,8 @@ def main():
             visitor.select,
             visitor.from_dirs,
             visitor.where,
-            respect_gitignore=not args.no_gitignore
+            respect_gitignore=not args.no_gitignore,
+            show_hidden=args.show_hidden
         )
 
         # Display results

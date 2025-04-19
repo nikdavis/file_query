@@ -21,6 +21,9 @@ def temp_dir():
         f.write("Test TXT")
     with open(root_path / "downloads/image.jpg", "w") as f:
         f.write("Test JPG")
+    # Add a hidden file
+    with open(root_path / "docs/.hidden.txt", "w") as f:
+        f.write("Hidden file")
 
     yield root_path  # Provide the path to the test
 
@@ -296,7 +299,8 @@ def test_query_without_where_clause(temp_dir):
     results = execute_query(
         visitor.select,
         visitor.from_dirs,
-        visitor.where
+        visitor.where,
+        show_hidden=True  # Show all files including hidden ones
     )
 
     # All files in the docs directory should be returned
@@ -325,7 +329,8 @@ def test_empty_query(temp_dir):
     results = execute_query(
         visitor.select,
         visitor.from_dirs,
-        visitor.where
+        visitor.where,
+        show_hidden=True  # Show all files including hidden ones
     )
 
     # Count all files in all subdirectories
@@ -358,7 +363,8 @@ def test_no_argument_query(temp_dir):
     results = execute_query(
         visitor.select,
         visitor.from_dirs,
-        visitor.where
+        visitor.where,
+        show_hidden=True  # Show all files including hidden ones
     )
 
     # Count all files in all subdirectories
@@ -374,3 +380,45 @@ def test_no_argument_query(temp_dir):
     # Ensure we're getting more than just one file type
     extensions = {os.path.splitext(p)[1] for p in actual}
     assert len(extensions) > 1, "Query with no argument should return files with different extensions"
+
+# Add a specific test for hidden file behavior
+def test_hidden_files(temp_dir):
+    """Test hidden files are excluded by default but included when show_hidden=True."""
+    # Create a hidden file
+    with open(temp_dir / "docs/.config.json", "w") as f:
+        f.write('{"setting": "value"}')
+
+    query_str = f"SELECT * FROM '{temp_dir}/docs'"
+
+    parsed = parse_query(query_str)
+    visitor = QueryVisitor()
+    visitor.visit(parsed)
+
+    # Without show_hidden
+    results_default = execute_query(
+        visitor.select,
+        visitor.from_dirs,
+        visitor.where
+    )
+
+    # With show_hidden=True
+    results_with_hidden = execute_query(
+        visitor.select,
+        visitor.from_dirs,
+        visitor.where,
+        show_hidden=True
+    )
+
+    # Check hidden files are not in default results
+    hidden_files = [str(p) for p in (temp_dir / "docs").glob(".*") if p.is_file()]
+    default_files = [str(p) for p in results_default]
+
+    for hidden_file in hidden_files:
+        assert hidden_file not in default_files, f"Hidden file {hidden_file} should not be in default results"
+
+    # Check hidden files are in results with show_hidden=True
+    with_hidden_files = [str(p) for p in results_with_hidden]
+    all_files = [str(p) for p in (temp_dir / "docs").glob("*") if p.is_file()]
+    all_files.extend(hidden_files)
+
+    assert sorted(with_hidden_files) == sorted(all_files), "Results with show_hidden should include all files"

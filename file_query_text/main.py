@@ -31,7 +31,7 @@ class QueryVisitor:
         self.from_dirs = parsed_query.get("from_dirs", [])
         self.where = parsed_query.get("where", None)
 
-def execute_query(select, from_dirs, where_conditions, respect_gitignore=True):
+def execute_query(select, from_dirs, where_conditions, respect_gitignore=True, show_hidden=False):
     matched_files = []
 
     # Set up gitignore matching if requested
@@ -62,6 +62,10 @@ def execute_query(select, from_dirs, where_conditions, respect_gitignore=True):
         for root, _, files in os.walk(directory):
             for filename in files:
                 file_path = os.path.join(root, filename)
+
+                # Skip hidden files (dot files) unless explicitly requested
+                if not show_hidden and os.path.basename(file_path).startswith('.'):
+                    continue
 
                 # Check if file is ignored by gitignore rules
                 if respect_gitignore:
