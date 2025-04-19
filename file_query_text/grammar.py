@@ -27,6 +27,7 @@ WHERE = Suppress(CaselessKeyword("WHERE"))
 AND = CaselessKeyword("AND")
 OR = CaselessKeyword("OR")
 NOT = CaselessKeyword("NOT")
+LIKE = CaselessKeyword("LIKE")
 
 # Define identifiers and literals
 IDENTIFIER = Word(alphas + "_")
@@ -36,7 +37,7 @@ NUMERIC_LITERAL = pyparsing_common.integer
 DIRECTORY_LIST = Group(delimitedList(STRING_LITERAL))
 
 # Define comparison operators
-COMPARISON_OP = oneOf("= == != <> < <= > >=")
+COMPARISON_OP = oneOf("= == != <> < <= > >=") | LIKE
 ATTRIBUTE = IDENTIFIER + Suppress("=") + STRING_LITERAL
 
 # Define basic condition with support for both string and numeric literals

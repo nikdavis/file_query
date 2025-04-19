@@ -1,4 +1,4 @@
-# File Query
+# File Query (fq)
 
 A SQL-like interface for querying files in your filesystem.
 
@@ -95,4 +95,20 @@ fq "SELECT * FROM '.' WHERE (extension == 'jpg' OR extension == 'png') AND size 
 
 # Find files with 'config' in their path
 fq "path == '.*config.*'"
+
+### Using wildcards with the LIKE operator
+
+Find all Python files with "test" in their name:
+```
+fq "name LIKE '%test%.py'"
+```
+
+Find all files with a specific prefix:
+```
+fq "name LIKE 'config%'"
+```
+
+Find all markdown files in a specific year's folder:
+```
+fq "path LIKE '%/2023/%' AND extension == 'md'"
 ```

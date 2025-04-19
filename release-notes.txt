@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.1.8 (2024-xx-xx)
+
+- Added SQL-style LIKE operator with % wildcard support for pattern matching on string attributes like name and path
+
 ## 0.1.0 (2024-xx-xx)
 
 Initial release of file-query.

@@ -432,3 +432,98 @@ def test_hidden_files(temp_dir):
     # Also check if every visible file is in results
     for visible_file in visible_files:
         assert visible_file in with_hidden_files, f"Visible file {visible_file} missing from results"
+
+def test_like_operator_with_wildcards(temp_dir):
+    """Test LIKE operator with SQL-style percentage wildcards."""
+    # Create specific files with different naming patterns
+    with open(temp_dir / "docs/report_2023.pdf", "w") as f:
+        f.write("Test PDF report 2023")
+    with open(temp_dir / "docs/report_2024.pdf", "w") as f:
+        f.write("Test PDF report 2024")
+    with open(temp_dir / "docs/summary_2023.pdf", "w") as f:
+        f.write("Test PDF summary 2023")
+    with open(temp_dir / "docs/note_2023.txt", "w") as f:
+        f.write("Test TXT note 2023")
+
+    # Test LIKE with wildcard at beginning
+    query_str = f"""
+    SELECT *
+    FROM '{temp_dir}/docs'
+    WHERE name LIKE '%2023.pdf'
+    """
+
+    parsed = parse_query(query_str)
+    visitor = QueryVisitor()
+    visitor.visit(parsed)
+
+    results = execute_query(
+        visitor.select,
+        visitor.from_dirs,
+        visitor.where
+    )
+
+    # Should match all 2023 PDF files
+    expected = [
+        str(temp_dir / "docs/report_2023.pdf"),
+        str(temp_dir / "docs/summary_2023.pdf")
+    ]
+
+    # Normalize paths for comparison
+    actual = [str(p) for p in results]
+    assert sorted(actual) == sorted(expected)
+
+    # Test LIKE with wildcard in middle
+    query_str = f"""
+    SELECT *
+    FROM '{temp_dir}/docs'
+    WHERE name LIKE 'report%pdf'
+    """
+
+    parsed = parse_query(query_str)
+    visitor = QueryVisitor()
+    visitor.visit(parsed)
+
+    results = execute_query(
+        visitor.select,
+        visitor.from_dirs,
+        visitor.where
+    )
+
+    # Should match all report PDF files
+    expected = [
+        str(temp_dir / "docs/report.pdf"),
+        str(temp_dir / "docs/report_2023.pdf"),
+        str(temp_dir / "docs/report_2024.pdf")
+    ]
+
+    # Normalize paths for comparison
+    actual = [str(p) for p in results]
+    assert sorted(actual) == sorted(expected)
+
+    # Test LIKE with wildcards at both ends
+    query_str = f"""
+    SELECT *
+    FROM '{temp_dir}/docs'
+    WHERE name LIKE '%report%'
+    """
+
+    parsed = parse_query(query_str)
+    visitor = QueryVisitor()
+    visitor.visit(parsed)
+
+    results = execute_query(
+        visitor.select,
+        visitor.from_dirs,
+        visitor.where
+    )
+
+    # Should match all files with 'report' in the name
+    expected = [
+        str(temp_dir / "docs/report.pdf"),
+        str(temp_dir / "docs/report_2023.pdf"),
+        str(temp_dir / "docs/report_2024.pdf")
+    ]
+
+    # Normalize paths for comparison
+    actual = [str(p) for p in results]
+    assert sorted(actual) == sorted(expected)

@@ -3,6 +3,7 @@ import sys
 from file_query_text.grammar import query  # Import the fixed grammar
 import file_query_text.gitignore_parser as gitignore_parser
 import os.path
+import re
 
 
 def parse_query(query_str):
@@ -128,6 +129,15 @@ def evaluate_conditions(file_path, condition):
                 if op == "<=": return attr_val is not None and int(attr_val) <= int(val)
                 if op == ">": return attr_val is not None and int(attr_val) > int(val)
                 if op == ">=": return attr_val is not None and int(attr_val) >= int(val)
+                if op.upper() == "LIKE":
+                    if attr_val is None:
+                        return False
+                    # Convert SQL LIKE pattern (with % wildcards) to regex pattern
+                    # Escape any regex special characters in the pattern except %
+                    pattern = re.escape(val).replace('\\%', '%')  # Unescape % after escaping everything else
+                    pattern = pattern.replace("%", ".*")
+                    pattern = f"^{pattern}$"  # Anchor pattern to match whole string
+                    return bool(re.search(pattern, str(attr_val), re.IGNORECASE))
 
             # 2. Logical operations from infixNotation: [left, op, right]
             elif expr[1] == "AND":
