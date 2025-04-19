@@ -527,3 +527,44 @@ def test_like_operator_with_wildcards(temp_dir):
     # Normalize paths for comparison
     actual = [str(p) for p in results]
     assert sorted(actual) == sorted(expected)
+
+def test_like_with_not_like_operators(temp_dir):
+    """Test combining LIKE and NOT LIKE operators."""
+    # Create specific files with different paths
+    os.makedirs(temp_dir / "src/components", exist_ok=True)
+    os.makedirs(temp_dir / "src/lib/utils", exist_ok=True)
+    os.makedirs(temp_dir / "src/views", exist_ok=True)
+
+    with open(temp_dir / "src/components/Button.js", "w") as f:
+        f.write("Component file")
+    with open(temp_dir / "src/lib/utils/helpers.js", "w") as f:
+        f.write("Library utility file")
+    with open(temp_dir / "src/views/Home.js", "w") as f:
+        f.write("View file")
+
+    # Query: Find files in src path but exclude anything with lib in the path
+    query_str = f"""
+    SELECT *
+    FROM '{temp_dir}'
+    WHERE path LIKE '{temp_dir}/src%' AND path NOT LIKE '%lib%'
+    """
+
+    parsed = parse_query(query_str)
+    visitor = QueryVisitor()
+    visitor.visit(parsed)
+
+    results = execute_query(
+        visitor.select,
+        visitor.from_dirs,
+        visitor.where
+    )
+
+    # Expected result (src files not in lib directory)
+    expected = [
+        str(temp_dir / "src/components/Button.js"),
+        str(temp_dir / "src/views/Home.js")
+    ]
+
+    # Normalize paths for comparison
+    actual = [str(p) for p in results]
+    assert sorted(actual) == sorted(expected)

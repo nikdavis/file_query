@@ -46,8 +46,15 @@ basic_condition = Group(IDENTIFIER + COMPARISON_OP + VALUE)
 
 # Define logical expressions using infixNotation for better handling of AND and OR
 condition_expr = Forward()
+
+# Define a new pattern for the NOT LIKE operator
+not_like_condition = Group(IDENTIFIER + NOT + LIKE + VALUE)
+
+# Include both basic conditions and NOT LIKE conditions
+basic_expr = basic_condition | not_like_condition
+
 condition_expr <<= infixNotation(
-    basic_condition,
+    basic_expr,
     [
         (NOT, 1, opAssoc.RIGHT),
         (AND, 2, opAssoc.LEFT),

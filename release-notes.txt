@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.1.9 (2024-xx-xx)
+
+- Added support for NOT LIKE operator to exclude files matching patterns
+- Fixed parsing of LIKE operator in different cases
+
 ## 0.1.8 (2024-xx-xx)
 
 - Added SQL-style LIKE operator with % wildcard support for pattern matching on string attributes like name and path

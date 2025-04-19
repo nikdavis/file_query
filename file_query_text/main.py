@@ -149,6 +149,20 @@ def evaluate_conditions(file_path, condition):
         elif len(expr) == 2 and expr[0] == "NOT":
             return not eval_expr(expr[1])
 
+        # 4. Special case for NOT LIKE: [attr, 'NOT', 'LIKE', value]
+        elif len(expr) == 4 and expr[1] == "NOT" and expr[2] == "LIKE":
+            attr_val = get_file_attr(expr[0])
+            val = expr[3].strip("'") if isinstance(expr[3], str) else expr[3]
+
+            if attr_val is None:
+                return True  # If attribute doesn't exist, NOT LIKE is True
+
+            # Convert SQL LIKE pattern (with % wildcards) to regex pattern
+            pattern = re.escape(val).replace('\\%', '%')  # Unescape % after escaping everything else
+            pattern = pattern.replace("%", ".*")
+            pattern = f"^{pattern}$"  # Anchor pattern to match whole string
+            return not bool(re.search(pattern, str(attr_val), re.IGNORECASE))
+
         return False
 
     return eval_expr(condition.asList())

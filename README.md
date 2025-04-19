@@ -112,3 +112,15 @@ Find all markdown files in a specific year's folder:
 ```
 fq "path LIKE '%/2023/%' AND extension == 'md'"
 ```
+
+### Excluding files with NOT LIKE
+
+Find all JavaScript files in src directory except those in lib folders:
+```
+fq "path LIKE 'src%' AND path NOT LIKE '%lib%' AND extension == 'js'"
+```
+
+Find all Python files that don't have "test" in their name:
+```
+fq "extension == 'py' AND name NOT LIKE '%test%'"
+```
